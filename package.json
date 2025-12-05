@@ -1,0 +1,26 @@
+{
+  "name": "ats-assessment",
+  "version": "1.0.0",
+  "description": "ATS employment assessment.",
+  "homepage": "https://github.com/DestefanoHub/ATS-Assessment#readme",
+  "bugs": {
+    "url": "https://github.com/DestefanoHub/ATS-Assessment/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DestefanoHub/ATS-Assessment.git"
+  },
+  "license": "ISC",
+  "author": "Andrew De Stefano",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^2.2.1",
+    "express": "^5.2.1"
+  }
+}
