@@ -1,7 +1,7 @@
 import express from 'express';
 // import bodyParser from 'body-parser';
 
-import { getDailyCallCountByCust } from './database.js';
+import { initializeDB, getDailyCallCountByCust, activityLog } from './database.js';
 
 const app = express();
 const port = 3100;
@@ -13,18 +13,32 @@ app.get('/details', async (req, res, next) => {
 });
 
 app.get('/summary', async (req, res, next) => {
+    let status = 200;
     const custID = (req.query.cust_id) ? +req.query.cust_id : null;
-    getDailyCallCountByCust(custID);
-    res.end();
+    const dailyCallCount = await getDailyCallCountByCust(custID);
+
+    if(!dailyCallCount.length){
+        status = 404;
+    }
+
+    res.status(status).json(dailyCallCount);
 });
 
 app.get('/logs', async (req, res, next) => {
+    let status = 200;
+    const activity = await activityLog();
 
+    if(!activity.length){
+        status = 404;
+    }
+
+    res.status(status).json(activity);
 });
 
 try{
     app.listen(port);
-    console.log('hello world!');
+    await initializeDB();
+    console.log('Server started with DB connection.');
 }catch(error){
     console.log(error);
 }

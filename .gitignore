@@ -140,4 +140,5 @@ vite.config.ts.timestamp-*
 
 # custom project files
 *.code-workspace
-mysql-creds.json
+*-creds.json
+.vscode

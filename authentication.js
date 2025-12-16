@@ -1,14 +1,23 @@
-const username = 'andrew';
-const password = 'Password123!';
-const encodedCreds = Buffer.from(`${username}:${password}`, 'utf8').toString('base64');
+import apiCreds from './api-creds.json' with {type: 'json'};
+
+const encodedCreds = Buffer.from(`${apiCreds.username}:${apiCreds.password}`, 'utf8').toString('base64');
 
 export async function authenticate(){
-    const response = await fetch('https://api.atscall.me/auth', {
+    let authToken = null;
+    
+    const response = await fetch('https://api.atscall.me:3102/auth', {
         method: 'POST',
         headers: {
             'Authorization': `Basic ${encodedCreds}`
         }
     });
 
-    console.log(response);
+    // console.log(response);
+
+    if(response.ok){
+        const responseBody = await response.json();
+        authToken = responseBody.token;
+    }
+
+    return authToken;
 };
