@@ -12,14 +12,19 @@ const connPool = mysql.createPool({
 });
 
 export async function initializeDB(){
-    let conn = null;
+    // let conn = null;
+
+    /*
+    * I tried to use a transaction for this database setup, but the CREATE TABLE and ALTER TABLE commands seem to implicitly
+    * force a commit, and even disabling autocommit did not seem to do the trick.
+    */
     
     try{
-        conn = await connPool.getConnection();
+        // conn = await connPool.getConnection();
+        // conn.execute('SET autocommit = 0');
+        // await conn.beginTransaction();
 
-        await conn.beginTransaction();
-
-        const tableCreated = await conn.execute(
+        const tableCreated = await connPool.execute(
             `CREATE TABLE IF NOT EXISTS cdrs (
             cust_id int(4) NOT NULL,
             id varchar(10) COLLATE utf8_unicode_ci NOT NULL,
@@ -32,7 +37,7 @@ export async function initializeDB(){
         );
 
         if(!tableCreated[0].warningStatus){
-            await conn.execute(
+            await connPool.execute(
                 `ALTER TABLE cdrs
                 ADD PRIMARY KEY (cust_id, id, seq),
                 ADD KEY seq (seq),
@@ -42,19 +47,20 @@ export async function initializeDB(){
             );
         }
 
-        await conn.commit();
+        //await conn.commit();
     }catch(error){
-        console.log('Database NOT initialized!');
         console.log(error);
+        console.log('Database not properly initialized, please check the RDBMS and make the necessary adjustments there before continuing.');
 
-        if(conn !== null){
-            await conn.rollback();
-        }
-    }finally{
-        if(conn !== null){
-            conn.release();
-        }
+        // if(conn !== null){
+        //     await conn.rollback();
+        // }
     }
+    // finally{
+    //     if(conn !== null){
+    //         conn.release();
+    //     }
+    // }
 }
 
 export async function insertCDR(ID, custID, callerID, seq, addedDT, startDT, endDT){
@@ -79,6 +85,44 @@ export async function insertCDR(ID, custID, callerID, seq, addedDT, startDT, end
         //This doesn't log by default because the data stream contains a number of primary key violations.
         // console.log(error);
     }
+}
+
+export async function getCDRDetails(id, custID, callerID){
+    let records = [];
+
+    if(!(id === null && custID === null && callerID === null)){
+        try{
+            const queryParams = {};
+            /*
+            * The WHERE 1=1 here avoids the need to include logic to figure out which WHERE clause will be first
+            * and then stick the WHERE in front. Also, the query only runs if one of the search parameters
+            * is provided, so it will never run just WHERE 1=1.
+            */
+            let query = 'SELECT * FROM cdrs WHERE 1=1';
+
+            if(id !== null){
+                query = query + ' AND id = :id';
+                queryParams.id = id;
+            }
+
+            if(custID !== null){
+                query = query + ' AND cust_id = :cust_id';
+                queryParams.cust_id = custID;
+            }
+
+            if(callerID !== null){
+                query = query + ' AND caller_id = :caller_id';
+                queryParams.caller_id = callerID;
+            }
+
+            const [results] = await connPool.execute(query, queryParams);
+            records = results;
+        }catch(error){
+            console.log(error);
+        }
+    }
+
+    return records;
 }
 
 export async function getDailyCallCountByCust(custID){
